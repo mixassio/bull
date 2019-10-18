@@ -4,6 +4,8 @@ const REDIS_URL = process.env.REDIS_URL;
 
 const txInQueue = new Queue('tx-in-queue', REDIS_URL);
 const txOutQueue = new Queue('tx-out-queue', REDIS_URL);
+const txEndQueue = new Queue('tx-end-queue', REDIS_URL);
+
 
 const sha3 = (obj) => {
   const stringifiedObj = JSON.stringify(obj);
@@ -35,6 +37,16 @@ txInQueue.process(
     done();
   },
 );
+
+txOutQueue.process(
+    async (job, done) => {
+      await delay(3000);
+      job.progress(20);
+      txEndQueue.add({ data: 'done'});
+      job.progress(25);
+      done();
+    },
+  );
 
 const main = async () => {
   repeat(100, () => {
