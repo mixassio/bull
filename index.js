@@ -1,57 +1,23 @@
-const crypto = require('crypto');
-const Queue = require('bull');
-const REDIS_URL = process.env.REDIS_URL;
+const axios = require('axios');
+const { txInQueue, txOutQueue, txEndQueue } = require('./queues');
+const app = require('./app');
+const hooks = require('./hooks-example');
 
-const txInQueue = new Queue('tx-in-queue', REDIS_URL);
-const txOutQueue = new Queue('tx-out-queue', REDIS_URL);
-const txEndQueue = new Queue('tx-end-queue', REDIS_URL);
+const port = 3000;
+app().listen(port, () => {
+    console.log(`Server was started on '${port}'`);
+});
 
 
-const sha3 = (obj) => {
-  const stringifiedObj = JSON.stringify(obj);
+const rpc = axios.create({
+    baseURL: 'http://0.0.0.0:3000',
+    proxy: false
+})
 
-  const secret = 'abcdefg';
-  const hash = crypto
-    .createHmac('sha256', secret)
-    .update(stringifiedObj)
-    .digest('hex');
-
-  return `0x${hash}`;
-}
-
-const  delay = async (ms) => {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-const repeat = (n, cb) => {
-  [...Array(n)].forEach(cb);
-}
-
-txInQueue.process(
-  async (job, done) => {
-    await delay(5000);
-    job.progress(38);
-    const txHash = sha3(job.data);
-    job.progress(87);
-    txOutQueue.add({ txHash });
-    done();
-  },
-);
-
-txOutQueue.process(
-    async (job, done) => {
-      await delay(3000);
-      job.progress(20);
-      txEndQueue.add({ data: 'done'});
-      job.progress(25);
-      done();
-    },
-  );
-
-const main = async () => {
-  repeat(100, () => {
-    txInQueue.add({ data: new Date().toISOString() });
-  });
-}
-
-main();
+hooks.forEach(hook => rpc.post('/', hook)
+    .then(function(response) {
+        console.log('response--->>', response.statusText);
+    })
+    .catch(function(error) {
+        console.log('error--->>', error);
+    }))
