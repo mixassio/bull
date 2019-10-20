@@ -5,21 +5,14 @@ const delay = async(ms) => {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-const txInQueue = new Queue('tx-in-queue', REDIS_URL);
 const txOutQueue = new Queue('tx-out-queue', REDIS_URL);
 const txEndQueue = new Queue('tx-end-queue', REDIS_URL);
-
-txInQueue.process(
+txOutQueue.process(
     async(job, done) => {
-        await delay(5000);
-        job.progress(38);
-        txOutQueue.add({ one: job.data });
+        await delay(10000);
+        job.progress(20);
+        txEndQueue.add({ one: job.data, second: 'from other conteiner' });
+        job.progress(25);
         done();
     },
 );
-
-module.exports = {
-    txInQueue,
-    txOutQueue,
-    txEndQueue
-};

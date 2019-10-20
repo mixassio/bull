@@ -16,6 +16,20 @@ services:
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - yarn:/usr/local/share/.cache/yarn/v2
+  server2:
+    build:
+      context: ./other_conteiner
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    hostname: server2
+    depends_on:
+      - redis
+      - server
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - yarn2:/usr/local/share/.cache/yarn/v2
   arena:
     image: weijing329/bee-queue-arena:v2.5.0
     depends_on:
@@ -37,3 +51,4 @@ volumes:
   # db:
   redis:
   yarn:
+  yarn2:

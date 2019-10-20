@@ -1,5 +1,4 @@
 const axios = require('axios');
-const { txInQueue, txOutQueue, txEndQueue } = require('./queues');
 const app = require('./app');
 const hooks = require('./hooks-example');
 
